@@ -4,6 +4,10 @@ use eframe::egui;
 use eframe::egui::{Color32, ColorImage, TextureHandle};
 use egui::Vec2;
 
+use crate::perlin::Perlin;
+
+mod perlin;
+
 fn main() {
     let native_options = eframe::NativeOptions::default();
     let _ = eframe::run_native(
@@ -42,6 +46,9 @@ impl Matr3 {
 struct Planet {
     radius: f64,
     angle: f64,
+    noise: Perlin,
+
+    freq: f64,
 }
 
 impl Planet {
@@ -63,11 +70,28 @@ impl Planet {
 
             let (x, y, z) = rotation_matrix.mul(x, y, z);
 
-            let r = (x * 255.0) as u8;
-            let g = (y * 255.0) as u8;
-            let b = (z * 255.0) as u8;
-            let a = 255;
-            Some(Color32::from_rgba_unmultiplied(r, g, b, a))
+            let noise = self
+                .noise
+                .noise(x * self.freq, y * self.freq, z * self.freq);
+            // let v = ((noise + 1.0) * 0.5 * 255.0).clamp(0.0, 255.0) as u8;
+            let n = (noise + 1.0) * 0.5;
+            // let r = noise as u8;
+            // let g = noise as u8;
+            // let b = noise as u8;
+            // let a = 255;
+            // Some(Color32::from_rgba_unmultiplied(v, v, v, a))
+            let color = if n < 0.5 {
+                Color32::from_rgb(0, 0, 128) // deep ocean
+            } else if n < 0.55 {
+                Color32::from_rgb(240, 230, 140) // beach
+            } else if n < 0.8 {
+                Color32::from_rgb(34, 139, 34) // grassland
+            } else if n < 0.9 {
+                Color32::from_rgb(0, 100, 0) // forest
+            } else {
+                Color32::from_rgb(255, 250, 250) // snow
+            };
+            Some(color)
         } else {
             None
         }
@@ -92,6 +116,8 @@ impl GeneratorApp {
             celestic_object: Planet {
                 radius: 0.5,
                 angle: 0.0,
+                noise: Perlin::new(),
+                freq: 3.0,
             },
         }
     }
@@ -117,7 +143,7 @@ impl GeneratorApp {
         let texture_width = self.window_size.0 / 2;
         let texture_height = self.window_size.1 / 2;
 
-        let image = self.create_image(texture_width, texture_height, 128);
+        let image = self.create_image(texture_width, texture_height, 32);
         if let Some(image) = image {
             let texture = ctx.load_texture(
                 "celestial render target",
@@ -172,10 +198,8 @@ impl eframe::App for GeneratorApp {
 
             // if self.update_widow_size(size) {
 
-            // TODO: recreate texture on window update or ui update
             self.update_widow_size(size);
             self.recreate_texture(ctx);
-            // }
 
             ui.horizontal(|ui| {
                 if let Some(texture) = &self.texture {
@@ -184,7 +208,11 @@ impl eframe::App for GeneratorApp {
                 ui.add(egui::Slider::new(
                     &mut self.celestic_object.angle,
                     0.0..=360.0,
-                ))
+                ));
+                ui.add(egui::Slider::new(
+                    &mut self.celestic_object.freq,
+                    0.0..=10.0,
+                ));
             });
         });
     }
