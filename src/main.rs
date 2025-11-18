@@ -7,14 +7,16 @@ use egui::Vec2;
 use crate::perlin::Perlin;
 
 mod perlin;
+mod random;
 
 fn main() {
-    let native_options = eframe::NativeOptions::default();
-    let _ = eframe::run_native(
-        "Astro Generator",
-        native_options,
-        Box::new(|cc| Ok(Box::new(GeneratorApp::new(cc)))),
-    );
+    // let native_options = eframe::NativeOptions::default();
+    // let _ = eframe::run_native(
+    //     "Astro Generator",
+    //     native_options,
+    //     Box::new(|cc| Ok(Box::new(GeneratorApp::new(cc)))),
+    // );
+    random::create_noise_png();
 }
 
 struct Matr3 {
