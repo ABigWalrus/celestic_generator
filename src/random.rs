@@ -75,10 +75,14 @@ pub fn create_perlin_noise_png() {
     for y in 0..height {
         for x in 0..width {
             // let random: f32 = rng.random();
+            let freq = 8.0;
             let noise = perlin
-                .noise(x as f64 / width as f64, y as f64 / height as f64, 0.0)
+                .noise(
+                    x as f64 / width as f64 * freq,
+                    y as f64 / height as f64 * freq,
+                    0.0,
+                )
                 .abs();
-            println!("{}", noise);
             for i in 0..3 {
                 // println!("{}", random);
                 data.push((noise * 255.0) as u8);
